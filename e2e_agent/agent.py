@@ -8,7 +8,10 @@ from google.adk.tools import exit_loop
 from pydantic import BaseModel, Field
 
 from . import prompts
-from .config import CODER_MODEL, DEFAULT_MODEL, MAX_ITERATIONS
+from .config import CODER_MODEL, DEFAULT_MODEL, MAX_ITERATIONS, resolve_model
+
+_default_model = resolve_model(DEFAULT_MODEL)
+_coder_model = resolve_model(CODER_MODEL)
 from .tools.coding import get_current_test_code, save_test_code
 from .tools.locators import inspect_page, probe_locator
 from .tools.runner import run_e2e_test
@@ -33,7 +36,7 @@ class TestPlan(BaseModel):
 
 planner_agent = LlmAgent(
     name="planner",
-    model=DEFAULT_MODEL,
+    model=_default_model,
     description="Turns the user's testing request into a verifiable checklist.",
     instruction=prompts.PLANNER_INSTRUCTION,
     output_schema=TestPlan,
@@ -42,7 +45,7 @@ planner_agent = LlmAgent(
 
 locator_agent = LlmAgent(
     name="locator_scout",
-    model=DEFAULT_MODEL,
+    model=_default_model,
     description="Inspects the live page and finds a proven locator for every checklist step.",
     instruction=prompts.LOCATOR_INSTRUCTION,
     tools=[inspect_page, probe_locator],
@@ -51,7 +54,7 @@ locator_agent = LlmAgent(
 
 coder_agent = LlmAgent(
     name="test_writer",
-    model=CODER_MODEL,
+    model=_coder_model,
     description="Writes (and rewrites) the Playwright test script from the plan and locators.",
     instruction=prompts.CODER_INSTRUCTION,
     tools=[save_test_code, get_current_test_code],
@@ -60,7 +63,7 @@ coder_agent = LlmAgent(
 
 verifier_agent = LlmAgent(
     name="verifier",
-    model=DEFAULT_MODEL,
+    model=_default_model,
     description="Runs the test, audits the recorded evidence against the checklist, "
                 "and either approves (ending the loop) or files issues.",
     instruction=prompts.VERIFIER_INSTRUCTION,
@@ -78,7 +81,7 @@ refinement_loop = LoopAgent(
 
 reporter_agent = LlmAgent(
     name="reporter",
-    model=DEFAULT_MODEL,
+    model=_default_model,
     description="Summarizes the final outcome and artifact locations for the user.",
     instruction=prompts.REPORTER_INSTRUCTION,
 )

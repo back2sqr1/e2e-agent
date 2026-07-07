@@ -52,6 +52,19 @@ cp .env.example .env   # then put your GOOGLE_API_KEY in .env
 
 Get an API key from [Google AI Studio](https://aistudio.google.com/apikey) (or set `GOOGLE_GENAI_USE_VERTEXAI=TRUE` with Vertex credentials instead).
 
+### Using OpenRouter instead
+
+Model ids with a provider prefix are routed through LiteLLM, so an [OpenRouter](https://openrouter.ai/) key works for any or all agents — no Google key needed if every agent uses one:
+
+```bash
+# in .env
+OPENROUTER_API_KEY=sk-or-v1-...
+E2E_AGENT_MODEL=openrouter/google/gemini-2.5-flash
+E2E_CODER_MODEL=openrouter/anthropic/claude-sonnet-4.5
+```
+
+Any `openrouter/<vendor>/<model>` id from the OpenRouter catalog works, with two requirements: the loop agents need **tool/function calling** and the planner needs **structured output** support (all mainstream Gemini / Claude / GPT models on OpenRouter have both; check the model page for smaller ones). You can also mix — e.g. native `gemini-2.5-flash` as `E2E_AGENT_MODEL` with an OpenRouter model just for the coder.
+
 ## Run
 
 ```bash
