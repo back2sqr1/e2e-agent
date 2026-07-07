@@ -1,0 +1,12 @@
+[project]
+name = "e2e-agent"
+version = "0.1.0"
+description = "Multi-agent E2E web testing: Google ADK agents that discover locators, write Playwright tests, run them, and self-correct until the test matches the user's intent."
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk>=1.0.0",
+    "playwright>=1.49.0",
+]
+
+[tool.setuptools]
+packages = ["e2e_agent", "e2e_agent.tools"]

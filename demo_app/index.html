@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gadget Store</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  header { display: flex; justify-content: space-between; align-items: center; }
+  ul { list-style: none; padding: 0; }
+  li { display: flex; justify-content: space-between; padding: .5rem; border-bottom: 1px solid #ddd; }
+  button { cursor: pointer; }
+  #checkout-form { display: none; margin-top: 1rem; }
+  #checkout-form.open { display: block; }
+  #success { display: none; background: #d4f7d4; padding: 1rem; margin-top: 1rem; }
+  input { display: block; margin: .5rem 0; padding: .4rem; width: 60%; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gadget Store</h1>
+  <span>Cart: <strong id="cart-count" data-testid="cart-count">0</strong> items</span>
+</header>
+
+<input type="search" placeholder="Search products" aria-label="Search products" id="search">
+
+<ul id="products">
+  <li data-name="wireless mouse"><span>Wireless Mouse — $24</span><button class="add" aria-label="Add Wireless Mouse to cart">Add to cart</button></li>
+  <li data-name="mechanical keyboard"><span>Mechanical Keyboard — $89</span><button class="add" aria-label="Add Mechanical Keyboard to cart">Add to cart</button></li>
+  <li data-name="usb-c hub"><span>USB-C Hub — $39</span><button class="add" aria-label="Add USB-C Hub to cart">Add to cart</button></li>
+  <li data-name="laptop backpack"><span>Laptop Backpack — $59</span><button class="add" aria-label="Add Laptop Backpack to cart">Add to cart</button></li>
+</ul>
+
+<button id="checkout-btn" data-testid="checkout">Checkout</button>
+
+<form id="checkout-form">
+  <h2>Checkout</h2>
+  <label for="name">Full name</label>
+  <input id="name" required>
+  <label for="email">Email</label>
+  <input id="email" type="email" required>
+  <button type="submit">Place order</button>
+</form>
+
+<div id="success" role="alert">Order placed! Thank you for shopping.</div>
+
+<script>
+  const count = document.getElementById('cart-count');
+  document.querySelectorAll('.add').forEach(btn =>
+    btn.addEventListener('click', () => count.textContent = Number(count.textContent) + 1));
+
+  document.getElementById('search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('#products li').forEach(li =>
+      li.style.display = li.dataset.name.includes(q) ? '' : 'none');
+  });
+
+  document.getElementById('checkout-btn').addEventListener('click', () => {
+    if (Number(count.textContent) > 0)
+      document.getElementById('checkout-form').classList.add('open');
+  });
+
+  document.getElementById('checkout-form').addEventListener('submit', e => {
+    e.preventDefault();
+    document.getElementById('success').style.display = 'block';
+  });
+</script>
+</body>
+</html>
