@@ -1,6 +1,6 @@
 # e2e-agent
 
-A multi-agent E2E testing system built on the [Google Agent Development Kit (ADK)](https://google.github.io/adk-docs/) and [Playwright](https://playwright.dev/python/). You describe what to test in plain English; the agents find the right elements on the live page, write a Playwright test, run it with video + trace recording, diagnose failures, and rewrite the test until it passes and matches your intent.
+A multi-agent E2E testing system built on the [Google Agent Development Kit (ADK)](https://google.github.io/adk-docs/) and [Playwright](https://playwright.dev/). You describe what to test in plain English; the agents find the right elements on the live page, write a **TypeScript** Playwright test (`@playwright/test`), run it with video + trace recording, diagnose failures, and rewrite the test until it passes and matches your intent.
 
 ## Architecture
 
@@ -18,10 +18,10 @@ user prompt
 ║ └───────┬───────┘                                      ║│
 ║ ┌───────▼───────┐ skills: save_test_code,              ║│
 ║ │ test_writer   │         get_current_test_code        ║│
-║ └───────┬───────┘  → workspace/test_generated.py       ║│
-║ ┌───────▼───────┐ skills: run_e2e_test, exit_loop      ║│
-║ │ verifier      │  → runs test, audits video/report,   ║│
-║ └───────────────┘    files issues OR exits the loop    ║│
+║ └───────┬───────┘  → workspace/test_generated.spec.ts  ║│
+║ ┌───────▼───────┐ skills: run_e2e_test, probe_locator, ║│
+║ │ verifier      │   exit_loop → runs test, audits      ║│
+║ └───────────────┘   report, files issues OR exits loop ║│
 ╚════════════════════════════════════════════════════════╝
     ▼
 ┌──────────┐
@@ -31,21 +31,23 @@ user prompt
 
 Each iteration the verifier attributes every failure to an owner (`locator-agent` for bad selectors, `coder-agent` for wrong actions/order/assertions), and the next pass of the loop fixes exactly those issues. The loop ends when every checklist item passes — or when the verifier concludes the *app* is broken, which it reports as a finding instead of looping forever.
 
-Generated tests run against a small harness (`e2e_agent/harness.py`) that records everything the verifier needs to "watch" the run:
+Generated tests are plain `@playwright/test` specs; `workspace/playwright.config.ts` records everything the verifier needs to "watch" the run:
 
 - **video** of the whole browser session (`.webm`)
-- **Playwright trace** (`trace.zip`, view with `playwright show-trace`)
-- per-step pass/fail with timing, error, and a **screenshot at the moment of failure**
-- browser console messages and page errors
+- **Playwright trace** (`trace.zip`, view with `npx playwright show-trace`)
+- per-step pass/fail (one `test.step` per checklist item) with timing and error
+- a **screenshot at the moment of failure**
 
-Artifacts land in `workspace/runs/run_NN/`.
+Artifacts land in `workspace/runs/run_NN/`. (`e2e_agent/harness.py` is the legacy recorder from when the pipeline generated Python tests; it's kept so older generated tests still run.)
 
 ## Setup
 
 ```bash
 uv venv --python 3.13 .venv
 uv pip install --python .venv/bin/python google-adk playwright
-.venv/bin/playwright install chromium
+.venv/bin/playwright install chromium   # browser for the locator scout
+
+(cd workspace && npm install)           # @playwright/test for generated tests
 
 cp .env.example .env   # then put your GOOGLE_API_KEY in .env
 ```
@@ -103,18 +105,21 @@ Include the URL and, ideally, your own checklist — the planner preserves your 
 e2e_agent/
   agent.py        # the four agents + loop wiring (root_agent lives here)
   prompts.py      # each agent's instructions
-  harness.py      # E2ETest: video/trace/report recorder generated tests run inside
+  harness.py      # legacy Python recorder (pre-TypeScript generated tests)
   config.py       # env-driven settings
   tools/
-    locators.py   # inspect_page, probe_locator        (locator_scout skills)
+    locators.py   # inspect_page, probe_locator     (locator_scout + verifier)
     coding.py     # save_test_code, get_current_test_code  (test_writer skills)
-    runner.py     # run_e2e_test                       (verifier skill)
+    runner.py     # run_e2e_test — npx playwright test  (verifier skill)
 demo_app/         # offline demo store to try the pipeline on
-workspace/        # generated test + per-run artifacts (gitignored)
+workspace/
+  package.json          # @playwright/test for the generated specs
+  playwright.config.ts  # video/trace/report recording per run
+  test_generated.spec.ts + runs/   # pipeline output (gitignored)
 ```
 
 ## Extending the skills
 
 - **Auth / multi-page flows**: add a `pre_actions` parameter to `inspect_page` (log in, click through) so mid-flow elements can be probed too.
 - **Visual judgment**: the verifier currently audits the structured report; Gemini is multimodal, so failure screenshots from `workspace/runs/run_NN/` can be attached as ADK artifacts for it to look at directly.
-- **CI**: run `adk run` non-interactively and gate on the reporter's verdict; commit `workspace/test_generated.py` once it passes as a durable regression test.
+- **CI**: run `adk run` non-interactively and gate on the reporter's verdict; commit `workspace/test_generated.spec.ts` once it passes as a durable regression test.

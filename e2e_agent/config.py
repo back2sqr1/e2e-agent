@@ -7,7 +7,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_DIR = PROJECT_ROOT / "workspace"
 RUNS_DIR = WORKSPACE_DIR / "runs"
-TEST_FILE = WORKSPACE_DIR / "test_generated.py"
+TEST_FILE = WORKSPACE_DIR / "test_generated.spec.ts"
 
 # Models. Plain Gemini ids ("gemini-2.5-flash") use ADK's native client with
 # GOOGLE_API_KEY. Ids with a provider prefix are routed through LiteLLM —

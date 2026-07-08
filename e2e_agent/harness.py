@@ -33,7 +33,7 @@ import traceback
 from contextlib import contextmanager
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 
 class StepFailed(Exception):
@@ -70,6 +70,9 @@ class E2ETest:
         )
         self._context.tracing.start(screenshots=True, snapshots=True, sources=True)
         self._context.set_default_timeout(self.action_timeout_ms)
+        # Web-first assertions default to a 5s retry window regardless of the
+        # action timeout; keep the two consistent.
+        expect.set_options(timeout=self.action_timeout_ms)
         self.page = self._context.new_page()
         self.page.on("console", self._on_console)
         self.page.on("pageerror", lambda err: self.page_errors.append(str(err)[:500]))

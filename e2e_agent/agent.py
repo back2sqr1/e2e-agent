@@ -48,7 +48,7 @@ locator_agent = LlmAgent(
     model=_default_model,
     description="Inspects the live page and finds a proven locator for every checklist step.",
     instruction=prompts.LOCATOR_INSTRUCTION,
-    tools=[inspect_page, probe_locator],
+    tools=[inspect_page, probe_locator, exit_loop],
     output_key="locator_report",
 )
 
@@ -67,7 +67,7 @@ verifier_agent = LlmAgent(
     description="Runs the test, audits the recorded evidence against the checklist, "
                 "and either approves (ending the loop) or files issues.",
     instruction=prompts.VERIFIER_INSTRUCTION,
-    tools=[run_e2e_test, exit_loop],
+    tools=[run_e2e_test, probe_locator, exit_loop],
     output_key="issues",
 )
 

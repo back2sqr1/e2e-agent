@@ -2,5 +2,8 @@
 __pycache__/
 *.pyc
 .env
-workspace/
+workspace/runs/
+workspace/node_modules/
+workspace/test_generated*
+workspace/package-lock.json
 .DS_Store
